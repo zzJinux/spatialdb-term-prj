@@ -29,4 +29,25 @@ inline static int comparePoints(void const *lhs, void const *rhs) {
     else return 0;
 }
 
+inline static double MINDIST(struct point p, struct rect r) {
+    double dx = .0;
+    double dy = .0;
+
+    if(p.x < r.min_x) {
+        dx = r.min_x - p.x;
+    }
+    else if(p.x > r.max_x) {
+        dx = p.x - r.max_x;
+    }
+
+    if(p.y < r.min_y) {
+        dy = r.min_y - p.y;
+    }
+    else if(p.y > r.max_y) {
+        dy = p.y - r.max_y;
+    }
+
+    return sqrt(dx*dx + dy*dy);
+}
+
 #endif

@@ -1,0 +1,22 @@
+project(src)
+
+set(headers
+    brute_force.h
+    KDTree.h
+    RTree.h
+    geom.h
+    io_utils.h
+    array.h
+)
+
+set(sources
+    brute_force.c
+    KDTree.c
+    RTree.c
+    array.c
+)
+
+add_library(mylib ${headers} ${sources})
+target_include_directories(mylib INTERFACE .)
+add_executable(a.out main.c)
+target_link_libraries(a.out mylib)

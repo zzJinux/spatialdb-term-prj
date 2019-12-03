@@ -1,54 +1,41 @@
-/**
-   rtree lib usage example app.
-*/
-
-#include <stdio.h>
-#include "brute_force.h"
 #include "KDTree.h"
-#include "RTree.h"
+#include "geom.h"
+#include "io_utils.h"
+#include "testutils.h"
+#include <stdio.h>
+#include <assert.h>
 
-RTREEMBR rects[] = {
-    { {0, 0, 0, 2, 2, 0} },  /* xmin, ymin, zmin, xmax, ymax, zmax (for 3 dimensional RTree) */
-    { {5, 5, 0, 7, 7, 0} },
-    { {8, 5, 0, 9, 6, 0} },
-    { {7, 1, 0, 9, 2, 0} }
-};
+static struct array rangeQueryFn(struct array arr, FILE *tcFile) {
+    struct point query_p;
+    double radi;
+    fscanf(tcFile, "%lf %lf %lf ", &query_p.x, &query_p.y, &radi);
 
-
-int nrects = sizeof(rects) / sizeof(rects[0]);
-RTREEMBR search_rect = {
-    {6, 4, 0, 10, 6, 0}   /* search will find above rects that this one overlaps */
-};
-
-int MySearchCallback(int id, void* arg) 
-{
-    /* Note: -1 to make up for the +1 when data was inserted */
-    fprintf (stdout, "Hit data mbr %d ", id-1);
-    return 1; /* keep going */
+    return create_array(0, sizeof(struct point));
 }
 
-int main()
-{
-    RTREENODE* root = RTreeCreate();
-    
-    int i, nhits;
-    
-    fprintf (stdout, "nrects = %d ", nrects);
-    
-    /* Insert all the testing data rects */
-    for(i=0; i<nrects; i++){
-        RTreeInsertRect(&rects[i],  /* the mbr being inserted */
-                        i+10,        /* i+1 is mbr ID. ID MUST NEVER BE ZERO */
-                        &root,        /* the address of rtree's root since root can change undernieth*/
-                        0            /* always zero which means to add from the root */
-            );
-    }
+static struct array kNNQueryFn(struct array arr, FILE *tcFile) {
+    struct point query_p;
+    int k;
+    fscanf(tcFile, "%lf %lf %d ", &query_p.x, &query_p.y, &k);
 
-    nhits = RTreeSearch(root, &search_rect, MySearchCallback, 0);
-    
-    fprintf (stdout, "Search resulted in %d hits ", nhits);
+    return create_array(0, sizeof(struct point));
+}
 
-    RTreeDestroy (root);
+int main(int argc, char *argv[]) {
+    assert(argc == 4);
+    FILE *listFile = fopen(argv[1], "r");
+    assert(listFile != NULL);
+    FILE *rqTestcase = fopen(argv[2], "r");
+    assert(rqTestcase != NULL);
+    FILE *kNNTestcase = fopen(argv[3], "r");
+    assert(kNNTestcase != NULL);
 
+
+    testQuery(listFile, rqTestcase, rangeQueryFn);
+    testQuery(listFile, kNNTestcase, kNNQueryFn);
+
+    fclose(listFile);
+    fclose(kNNTestcase);
+    fclose(rqTestcase);
     return 0;
 }

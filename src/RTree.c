@@ -15,7 +15,7 @@
 *               License (>=v2). Read the file COPYING that comes with GRASS
 *               for details.
 *
-* LAST MODIFY:         ZhangLiang (cheungmine@gmail.com) - 2007-11
+* LAST MODIFY:         Jinwook Jeong (vustthat@gmail.com) - 20019-11
 *****************************************************************************/
 
 #include <stdio.h>

@@ -1,6 +1,6 @@
 #include "brute_force.h"
 #include "geom.h"
-#include "io_utils.h"
+#include "utils.h"
 #include "testutils.h"
 #include <stdio.h>
 #include <assert.h>

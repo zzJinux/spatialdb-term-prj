@@ -4,7 +4,7 @@ target_link_libraries(brute_force_test PRIVATE mylib)
 add_executable(kdtree_test kdtree_test.c)
 target_link_libraries(kdtree_test PRIVATE mylib)
 
-add_executable(rtree_test kdtree_test.c)
+add_executable(rtree_test rtree_test.c)
 target_link_libraries(rtree_test PRIVATE mylib)
 
 add_executable(pqueue_test pqueue_test.c)

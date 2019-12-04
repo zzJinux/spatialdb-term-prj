@@ -20,7 +20,7 @@
 typedef void (*NoArgMethod)(void *);
 typedef void (*OneArgMethod)(void *, void *);
 typedef void *(*NoArgMethodRPtr)(void *);
-typedef int *(*NoArgMethodRInt)(void *);
+typedef int (*NoArgMethodRInt)(void *);
 
 struct candidate_node {
     struct kd_node_t *current_node;

@@ -90,6 +90,16 @@ struct kd_node_t *make_kdtree(struct kd_node_t *t, int len, int i, int dim)
     return n;
 }
 
+/***
+ *         _______..______      ___   .___________. __       ___       __          _______  .______   
+ *        /       ||   _  \    /   \  |           ||  |     /   \     |  |        |       \ |   _  \  
+ *       |   (----`|  |_)  |  /  ^  \ `---|  |----`|  |    /  ^  \    |  |        |  .--.  ||  |_)  | 
+ *        \   \    |   ___/  /  /_\  \    |  |     |  |   /  /_\  \   |  |        |  |  |  ||   _  <  
+ *    .----)   |   |  |     /  _____  \   |  |     |  |  /  _____  \  |  `----.   |  '--'  ||  |_)  | 
+ *    |_______/    | _|    /__/     \__\  |__|     |__| /__/     \__\ |_______|   |_______/ |______/  
+ *                                                                                                    
+ */
+
 typedef struct traverse_context *_TC;
 typedef void (*NoArgMethod)(_TC);
 typedef void (*OneArgMethod)(_TC, void *);

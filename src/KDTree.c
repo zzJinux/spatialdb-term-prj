@@ -17,17 +17,6 @@
 
 #define COMPARE(a, b) ((a > b) ? a : b)
 
-typedef void (*NoArgMethod)(void *);
-typedef void (*OneArgMethod)(void *, void *);
-typedef void *(*NoArgMethodRPtr)(void *);
-typedef int (*NoArgMethodRInt)(void *);
-
-struct candidate_node {
-    struct kd_node_t *current_node;
-    struct rect rect;
-    int dim;
-};
-
 // 거리함수 정의.
 inline static double kd_dist(struct kd_node_t *a, struct kd_node_t *b, int dim)
 {
@@ -99,6 +88,18 @@ struct kd_node_t *make_kdtree(struct kd_node_t *t, int len, int i, int dim)
     return n;
 }
 
+typedef struct traverse_context *_TC;
+typedef void (*NoArgMethod)(_TC);
+typedef void (*OneArgMethod)(_TC, void *);
+typedef void *(*NoArgMethodRPtr)(_TC);
+typedef int (*NoArgMethodRInt)(_TC);
+
+struct candidate_node {
+    struct kd_node_t *current_node;
+    struct rect rect;
+    int dim;
+};
+
 struct traverse_context {
     double radius;
     void *results;
@@ -120,25 +121,25 @@ static void traverse(struct kd_node_t *p, struct point query_p, struct traverse_
     cand.rect.max_x = INFINITY;
     cand.rect.max_y = INFINITY;
     cand.dim = 0;
-    ctx->nodes_push(ctx->nodes, &cand);
+    ctx->nodes_push(ctx, &cand);
 
     struct kd_node_t query_kd;
     query_kd.x[0] = query_p.x;
     query_kd.x[1] = query_p.y;
 
-    while(ctx->nodes_size(ctx->nodes)) {
-        struct candidate_node *cand = (struct candidate_node *)ctx->nodes_top(ctx->nodes);
+    while(ctx->nodes_size(ctx)) {
+        struct candidate_node *cand = (struct candidate_node *)ctx->nodes_top(ctx);
         struct kd_node_t *node = cand->current_node;
         struct rect rect = cand->rect;
         int dim_idx = cand->dim;
-        ctx->nodes_pop(ctx->nodes);
+        ctx->nodes_pop(ctx);
         double d = kd_dist(node, &query_kd, 2);
 
         if(d < ctx->radius) {
             struct point hitp;
             hitp.x = node->x[0];
             hitp.y = node->x[1];
-            ctx->query_hit(ctx->results, &hitp);
+            ctx->query_hit(ctx, &hitp);
         }
 
         double min_x = rect.min_x, max_x = rect.max_x;
@@ -165,7 +166,7 @@ static void traverse(struct kd_node_t *p, struct point query_p, struct traverse_
             }
 
             if(MINDIST(query_p, *crect) < ctx->radius) {
-                ctx->nodes_push(ctx->nodes, &new_cand);
+                ctx->nodes_push(ctx, &new_cand);
             }
         }
 
@@ -185,7 +186,7 @@ static void traverse(struct kd_node_t *p, struct point query_p, struct traverse_
             }
 
             if(MINDIST(query_p, *crect) < ctx->radius) {
-                ctx->nodes_push(ctx->nodes, &new_cand);
+                ctx->nodes_push(ctx, &new_cand);
             }
         }
     }
@@ -195,20 +196,24 @@ static void traverse(struct kd_node_t *p, struct point query_p, struct traverse_
 
 /* --------------- METHODS FOR RANGE QUERY --------------- */
 
-static void _rq_push(void *st, void *elem) {
-    stack_push(st, elem);
+static void _rq_query_hit(_TC ctx, void *elem) {
+    stack_push(ctx->results, elem);
 }
 
-static void _rq_pop(void *st) {
-    stack_pop(st);
+static void _rq_nodes_push(_TC ctx, void *elem) {
+    stack_push(ctx->nodes, elem);
 }
 
-static int _rq_size(void *st) {
-    return ((struct array *)st)->len;
+static void _rq_nodes_pop(_TC ctx) {
+    stack_pop(ctx->nodes);
 }
 
-static void *_rq_top(void *st) {
-    return stack_top(st);
+static int _rq_nodes_size(_TC ctx) {
+    return ((struct array *)ctx->nodes)->len;
+}
+
+static void *_rq_nodes_top(_TC ctx) {
+    return stack_top(ctx->nodes);
 }
 
 struct array kd_rangeQuery(struct kd_node_t *p, struct point query_p, double radius) {
@@ -217,12 +222,12 @@ struct array kd_rangeQuery(struct kd_node_t *p, struct point query_p, double rad
     struct array nodes = create_array(0, sizeof(struct candidate_node));
     ctx.radius = radius;
     ctx.results = &results;
-    ctx.query_hit = _rq_push;
+    ctx.query_hit = _rq_query_hit;
     ctx.nodes = &nodes;
-    ctx.nodes_push = _rq_push;
-    ctx.nodes_pop = _rq_pop;
-    ctx.nodes_size = _rq_size;
-    ctx.nodes_top = _rq_top;
+    ctx.nodes_push = _rq_nodes_push;
+    ctx.nodes_pop = _rq_nodes_pop;
+    ctx.nodes_size = _rq_nodes_size;
+    ctx.nodes_top = _rq_nodes_top;
 
     traverse(p, query_p, &ctx);
     destroy_array(&nodes);
@@ -235,11 +240,42 @@ struct array kd_rangeQuery(struct kd_node_t *p, struct point query_p, double rad
 
 /* --------------- METHODS FOR kNN QUERY --------------- */
 
+static void _kNN_query_hit(_TC ctx, void *elem) {
+    stack_push(ctx->results, elem);
+}
 
+static void _kNN_nodes_push(_TC ctx, void *elem) {
+    stack_push(ctx->nodes, elem);
+}
+
+static void _kNN_nodes_pop(_TC ctx) {
+    stack_pop(ctx->nodes);
+}
+
+static int _kNN_nodes_size(_TC ctx) {
+    return ((struct array *)ctx->nodes)->len;
+}
+
+static void *_kNN_nodes_top(_TC ctx) {
+    return stack_top(ctx->nodes);
+}
 
 struct array kd_kNNQuery(struct kd_node_t *p, struct point query_p, int K) {
+    struct traverse_context ctx;
+    struct array results = create_array(0, sizeof(struct point));
+    struct array nodes = create_array(0, sizeof(struct candidate_node));
+    ctx.radius = INT_MAX;
+    ctx.results = &results;
+    ctx.query_hit = _kNN_query_hit;
+    ctx.nodes = &nodes;
+    ctx.nodes_push = _kNN_nodes_push;
+    ctx.nodes_pop = _kNN_nodes_pop;
+    ctx.nodes_size = _kNN_nodes_size;
+    ctx.nodes_top = _kNN_nodes_top;
 
-    return create_array(0, sizeof(struct point));
+    // traverse(p, query_p, &ctx);
+    destroy_array(&nodes);
+    return *(struct array *)ctx.results;
 }
 
 /* ----------------------------------------------------- */

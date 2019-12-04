@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-static int compare_ints(void const *a, void const *b) {
+static int compare_ints(void *aux, void const *a, void const *b) {
     return *(int const *)a - *(int const *)b;
 }
 
@@ -21,7 +21,7 @@ int main(void) {
     int int_values[] = { 5, 3, 1, 7, 4, 9 };
     size_t n = sizeof(int_values)/sizeof(int);
 
-    struct pqueue pq = create_pq(sizeof(int), compare_ints);
+    struct pqueue pq = create_pq(sizeof(int), compare_ints, NULL);
     int inter_results[] = { 5, 5, 5, 7, 7, 9 };
     for(int i=0; i<n; ++i) {
         pq_push(&pq, &int_values[i]);

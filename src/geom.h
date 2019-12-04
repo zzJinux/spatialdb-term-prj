@@ -14,9 +14,15 @@ struct rect {
     double max_x, max_y;
 };
 
-inline static double dist(struct point A, struct point B) {
+inline static double dist(struct point const A, struct point const B) {
     double xd = B.x - A.x;
     double yd = B.y - A.y;
+    return sqrt(xd*xd + yd*yd);
+}
+
+inline static double dist_p(struct point const *A, struct point const *B) {
+    double xd = B->x - A->x;
+    double yd = B->y - A->y;
     return sqrt(xd*xd + yd*yd);
 }
 

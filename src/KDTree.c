@@ -9,6 +9,8 @@
 #include "geom.h"
 #include "stack.h"
 #include "array.h"
+#include "pqueue.h"
+#include "utils.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,7 +20,7 @@
 #define COMPARE(a, b) ((a > b) ? a : b)
 
 // 거리함수 정의.
-inline static double kd_dist(struct kd_node_t *a, struct kd_node_t *b, int dim)
+inline static double kd_dist(struct kd_node_t const *a, struct kd_node_t const *b, int dim)
 {
     double t, d = 0;
     while (dim--)
@@ -102,6 +104,7 @@ struct candidate_node {
 
 struct traverse_context {
     double radius;
+    int K;
     void *results;
     OneArgMethod query_hit;
     void *nodes;
@@ -241,30 +244,64 @@ struct array kd_rangeQuery(struct kd_node_t *p, struct point query_p, double rad
 /* --------------- METHODS FOR kNN QUERY --------------- */
 
 static void _kNN_query_hit(_TC ctx, void *elem) {
-    stack_push(ctx->results, elem);
+    struct pqueue *pq = ctx->results;
+    struct point *query_p = pq->_aux;
+    if(pq_size(pq) < ctx->K) {
+        pq_push(pq, elem);
+        return;
+    }
+
+    struct point *curFarthest = (struct point *)pq_top(pq);
+    if(pq->_cmp(query_p, elem, curFarthest) < 0) {
+        pq_pop(pq);
+        pq_push(pq, elem);
+        ctx->radius = dist_p(query_p, elem);
+        return;
+    }
 }
 
 static void _kNN_nodes_push(_TC ctx, void *elem) {
-    stack_push(ctx->nodes, elem);
+    pq_push(ctx->nodes, elem);
 }
 
 static void _kNN_nodes_pop(_TC ctx) {
-    stack_pop(ctx->nodes);
+    pq_pop(ctx->nodes);
 }
 
 static int _kNN_nodes_size(_TC ctx) {
-    return ((struct array *)ctx->nodes)->len;
+    return pq_size(ctx->nodes);
 }
 
 static void *_kNN_nodes_top(_TC ctx) {
-    return stack_top(ctx->nodes);
+    return pq_top(ctx->nodes);
+}
+
+static int results_comparator(void *aux, void const *a, void const *b) {
+    struct point *point = aux;
+    struct point const *lhs = a;
+    struct point const *rhs = b;
+    // maxheap
+    return sgn(dist_p(lhs, point) - dist_p(rhs, point));
+}
+
+static int nodes_comparator(void *aux, void const *a, void const *b) {
+    struct kd_node_t *point = aux;
+    struct candidate_node const *lhs = a;
+    struct candidate_node const *rhs = b;
+    // minheap
+    return sgn(kd_dist(rhs->current_node, point, 2) - kd_dist(lhs->current_node, point, 2));
 }
 
 struct array kd_kNNQuery(struct kd_node_t *p, struct point query_p, int K) {
+    struct kd_node_t query_p_kd;
+    query_p_kd.x[0] = query_p.x;
+    query_p_kd.x[1] = query_p.y;
+    struct pqueue results = create_pq(sizeof(struct point), results_comparator, &query_p);
+    struct pqueue nodes = create_pq(sizeof(struct candidate_node), nodes_comparator, &query_p_kd);
+
     struct traverse_context ctx;
-    struct array results = create_array(0, sizeof(struct point));
-    struct array nodes = create_array(0, sizeof(struct candidate_node));
-    ctx.radius = INT_MAX;
+    ctx.radius = INFINITY;
+    ctx.K = K;
     ctx.results = &results;
     ctx.query_hit = _kNN_query_hit;
     ctx.nodes = &nodes;
@@ -273,9 +310,12 @@ struct array kd_kNNQuery(struct kd_node_t *p, struct point query_p, int K) {
     ctx.nodes_size = _kNN_nodes_size;
     ctx.nodes_top = _kNN_nodes_top;
 
-    // traverse(p, query_p, &ctx);
-    destroy_array(&nodes);
-    return *(struct array *)ctx.results;
+    traverse(p, query_p, &ctx);
+    destroy_pq(&nodes);
+
+    struct array ret = pq_to_array(&results);
+    destroy_pq(&results);
+    return ret;
 }
 
 /* ----------------------------------------------------- */

@@ -15,5 +15,6 @@ size_t pq_size(struct pqueue *pq);
 void pq_push(struct pqueue *pq, void *elem);
 void pq_pop(struct pqueue *pq);
 void *pq_top(struct pqueue *pq);
+struct array pq_to_array(struct pqueue *pq);
 
 #endif

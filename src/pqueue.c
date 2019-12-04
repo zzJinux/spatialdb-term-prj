@@ -53,3 +53,11 @@ void pq_pop(struct pqueue *pq) {
 void *pq_top(struct pqueue *pq) {
     return GET(pq->_arr, 1);
 }
+
+struct array pq_to_array(struct pqueue *pq) {
+    size_t elem_size = pq->_arr.elem_size;
+    int N = pq_size(pq);
+    struct array ret = create_array(pq_size(pq), elem_size);
+    memcpy(ret.buf, (char *)pq->_arr.buf + elem_size, N * elem_size);
+    return ret;
+}

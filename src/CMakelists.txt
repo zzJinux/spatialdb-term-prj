@@ -7,6 +7,7 @@ set(headers
     geom.h
     io_utils.h
     array.h
+    pqueue.h
 )
 
 set(sources
@@ -14,6 +15,7 @@ set(sources
     KDTree.c
     RTree.c
     array.c
+    pqueue.c
 )
 
 add_library(mylib ${headers} ${sources})

@@ -3,6 +3,8 @@
 
 #include "stddef.h"
 
+#define GET(arr, idx) ((void *)((char *)(arr).buf + (idx) * (arr).elem_size))
+
 struct array {
     size_t len, elem_size;
     size_t _caplen;

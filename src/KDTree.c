@@ -175,9 +175,11 @@ struct array kd_rangeQuery(struct kd_node_t *p, struct point query_p, double rad
         }
     }
 
+    destroy_array(&st);
     return results;
 }
 
 struct array kd_kNNQuery(struct kd_node_t *p, struct point query_p, int K) {
+
     return create_array(0, sizeof(struct point));
 }

@@ -8,6 +8,7 @@ set(headers
     utils.h
     array.h
     pqueue.h
+    query_utils.h
 )
 
 set(sources

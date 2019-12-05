@@ -258,6 +258,9 @@ static void _kNN_query_hit(_TC ctx, void *elem) {
     struct point *query_p = pq->_aux;
     if(pq_size(pq) < ctx->K) {
         pq_push(pq, elem);
+        if(pq_size(pq) == ctx->K) {
+            ctx->radius = dist_p(query_p, pq_top(pq));
+        }
         return;
     }
 

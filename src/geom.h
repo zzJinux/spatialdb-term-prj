@@ -56,4 +56,26 @@ inline static double MINDIST(struct point p, struct rect r) {
     return sqrt(dx*dx + dy*dy);
 }
 
+inline static double MINMAXDIST(struct point p, struct rect r) {
+    double distx, disty, a, ret = INFINITY;
+    double alongx, alongy;
+    // f(x) -> f(a - |x-a|) : left half of f(x) divided by x=a mirrored to the right half
+
+    // along x-axis
+    a = (r.max_x + r.min_x)/2;
+    distx = fabs((a - fabs(p.x - a)) - r.min_x);
+    a = (r.max_y + r.min_y)/2;
+    disty = fabs(r.min_y - a) + (r.max_y - r.min_y/2);
+    alongx = sqrt(distx*distx + disty*disty);
+    
+    // along y-axis
+    a = (r.max_y + r.min_y)/2;
+    disty = fabs((a - fabs(p.y - a)) - r.min_y);
+    a = (r.max_x + r.min_x)/2;
+    distx = fabs(r.min_x - a) + (r.max_x - r.min_x/2);
+    alongy = sqrt(distx*distx + disty*disty);
+
+    return alongx > alongy ? alongx : alongy;
+}
+
 #endif

@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
     assert(kNNTestcase != NULL);
 
 
-    testQuery(listFile, rqTestcase, rt_rangeQueryFn);
-    testQuery(listFile, kNNTestcase, rt_kNNQueryFn);
+    testQuery(listFile, rqTestcase, run_rt_rangeQuery);
+    testQuery(listFile, kNNTestcase, run_rt_kNNQuery);
 
     fclose(listFile);
     fclose(kNNTestcase);

@@ -6,14 +6,14 @@
 #include "RTree.h"
 #include <stdio.h>
 
-static struct array bf_rangeQueryFn(struct array arr, FILE *tcFile) {
+static struct array run_bf_rangeQuery(struct array arr, FILE *tcFile) {
     struct point query_p;
     double radi;
     fscanf(tcFile, "%lf %lf %lf ", &query_p.x, &query_p.y, &radi);
     return bf_rangeQuery(arr, query_p, radi);
 }
 
-static struct array bf_kNNQueryFn(struct array arr, FILE *tcFile) {
+static struct array run_bf_kNNQuery(struct array arr, FILE *tcFile) {
     struct point query_p;
     int k;
     fscanf(tcFile, "%lf %lf %d ", &query_p.x, &query_p.y, &k);
@@ -34,7 +34,7 @@ static struct array kdnodesFromPoints(struct array arr) {
     return kdnodes_array;
 }
 
-static struct array kd_rangeQueryFn(struct array arr, FILE *tcFile) {
+static struct array run_kd_rangeQuery(struct array arr, FILE *tcFile) {
     struct point query_p;
     double radi;
     fscanf(tcFile, "%lf %lf %lf ", &query_p.x, &query_p.y, &radi);
@@ -48,7 +48,7 @@ static struct array kd_rangeQueryFn(struct array arr, FILE *tcFile) {
     return queryResult;
 }
 
-static struct array kd_kNNQueryFn(struct array arr, FILE *tcFile) {
+static struct array run_kd_kNNQuery(struct array arr, FILE *tcFile) {
     struct point query_p;
     int k;
     fscanf(tcFile, "%lf %lf %d ", &query_p.x, &query_p.y, &k);
@@ -74,7 +74,7 @@ static RTREENODE *RTNodeFromPoints(struct array arr) {
     return root;
 }
 
-static struct array rt_rangeQueryFn(struct array arr, FILE *tcFile) {
+static struct array run_rt_rangeQuery(struct array arr, FILE *tcFile) {
     struct point query_p;
     double radi;
     fscanf(tcFile, "%lf %lf %lf ", &query_p.x, &query_p.y, &radi);
@@ -86,7 +86,7 @@ static struct array rt_rangeQueryFn(struct array arr, FILE *tcFile) {
     return results;
 }
 
-static struct array rt_kNNQueryFn(struct array arr, FILE *tcFile) {
+static struct array run_rt_kNNQuery(struct array arr, FILE *tcFile) {
     struct point query_p;
     int k;
     fscanf(tcFile, "%lf %lf %d ", &query_p.x, &query_p.y, &k);

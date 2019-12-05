@@ -1117,3 +1117,207 @@ int RTreeDeleteRect( RTREEMBR *rc, int tid, RTREENODE **root)
     
     return 1;
 }
+
+/***
+ *         _______..______      ___   .___________. __       ___       __          _______  .______   
+ *        /       ||   _  \    /   \  |           ||  |     /   \     |  |        |       \ |   _  \  
+ *       |   (----`|  |_)  |  /  ^  \ `---|  |----`|  |    /  ^  \    |  |        |  .--.  ||  |_)  | 
+ *        \   \    |   ___/  /  /_\  \    |  |     |  |   /  /_\  \   |  |        |  |  |  ||   _  <  
+ *    .----)   |   |  |     /  _____  \   |  |     |  |  /  _____  \  |  `----.   |  '--'  ||  |_)  | 
+ *    |_______/    | _|    /__/     \__\  |__|     |__| /__/     \__\ |_______|   |_______/ |______/  
+ *                                                                                                    
+ */
+
+#include "stack.h"
+#include "pqueue.h"
+#include "utils.h"
+#include <limits.h>
+
+inline static double MINDIST_RT(struct point const *p, RTREEMBR const *rtr) {
+    double dx = .0;
+    double dy = .0;
+
+    struct rect r;
+    r.min_x = rtr->bound[0];
+    r.min_y = rtr->bound[1];
+    r.max_x = rtr->bound[2];
+    r.max_y = rtr->bound[3];
+
+    if(p->x < r.min_x) {
+        dx = r.min_x - p->x;
+    }
+    else if(p->x > r.max_x) {
+        dx = p->x - r.max_x;
+    }
+
+    if(p->y < r.min_y) {
+        dy = r.min_y - p->y;
+    }
+    else if(p->y > r.max_y) {
+        dy = p->y - r.max_y;
+    }
+
+    return sqrt(dx*dx + dy*dy);
+}
+
+typedef struct traverse_context *_TC;
+typedef void (*NoArgMethod)(_TC);
+typedef void (*OneArgMethod)(_TC, void *);
+typedef void *(*NoArgMethodRPtr)(_TC);
+typedef int (*NoArgMethodRInt)(_TC);
+
+struct candidate_node {
+    RTREEBRANCH *br;
+    int level;
+};
+
+struct traverse_context {
+    double radius;
+    int K;
+    void *results;
+    OneArgMethod query_hit;
+    void *nodes;
+    OneArgMethod nodes_push;
+    NoArgMethod nodes_pop;
+    NoArgMethodRInt nodes_size;
+    NoArgMethodRPtr nodes_top;
+};
+
+void traverse(RTREENODE *p, struct point query_p, struct traverse_context *ctx) {
+    // push branches of root
+    for(int i=0; i<p->count; ++i) {
+        struct candidate_node cnode;
+        cnode.br = &p->branch[i];
+        cnode.level = p->level;
+        ctx->nodes_push(ctx, &cnode);
+    }
+    
+    while(ctx->nodes_size(ctx)) {
+        struct candidate_node *cnode = ctx->nodes_top(ctx); 
+        RTREEBRANCH *br = cnode->br;
+        int level = cnode->level;
+        ctx->nodes_pop(ctx);
+
+        if(MINDIST_RT(&query_p, &br->mbr) > ctx->radius) continue;
+        if(level == 0) {
+            struct point hitp;
+            hitp.x = br->mbr.bound[0];
+            hitp.y = br->mbr.bound[1];
+            ctx->query_hit(ctx, &hitp);
+        }
+        else {
+            RTREENODE *child = br->child;
+            for(int i=0; i<child->count; ++i) {
+                struct candidate_node cnode;
+                cnode.br = &child->branch[i];
+                cnode.level = child->level;
+                ctx->nodes_push(ctx, &cnode);
+            }
+        }
+    }
+}
+
+/* --------------- METHODS FOR RANGE QUERY --------------- */
+
+static void _rq_query_hit(_TC ctx, void *elem) {
+    stack_push(ctx->results, elem);
+}
+
+static void _rq_nodes_push(_TC ctx, void *elem) {
+    stack_push(ctx->nodes, elem);
+}
+
+static void _rq_nodes_pop(_TC ctx) {
+    stack_pop(ctx->nodes);
+}
+
+static int _rq_nodes_size(_TC ctx) {
+    return ((struct array *)ctx->nodes)->len;
+}
+
+static void *_rq_nodes_top(_TC ctx) {
+    return stack_top(ctx->nodes);
+}
+
+struct array RT_rangeQuery(RTREENODE *p, struct point query_p, double radius) {
+    struct traverse_context ctx;
+    struct array results = create_array(0, sizeof(struct point));
+    struct array nodes = create_array(0, sizeof(struct candidate_node));
+    ctx.radius = radius;
+    ctx.K = INT_MAX;
+    ctx.results = &results;
+    ctx.query_hit = _rq_query_hit;
+    ctx.nodes = &nodes;
+    ctx.nodes_push = _rq_nodes_push;
+    ctx.nodes_pop = _rq_nodes_pop;
+    ctx.nodes_size = _rq_nodes_size;
+    ctx.nodes_top = _rq_nodes_top;
+
+    traverse(p, query_p, &ctx);
+    destroy_array(&nodes);
+    return *(struct array *)ctx.results;
+}
+
+/* ------------------------------------------------------- */
+/* ------------------------------------------------------- */
+
+static void _kNN_query_hit(_TC ctx, void *elem) {
+    struct array *array = ctx->results;
+    if(array->len < ctx->K) {
+        append_array(array, elem);
+        return;
+    }
+    else {
+        ctx->radius = .0;
+    }
+}
+
+static void _kNN_nodes_push(_TC ctx, void *elem) {
+    pq_push(ctx->nodes, elem);
+}
+
+static void _kNN_nodes_pop(_TC ctx) {
+    pq_pop(ctx->nodes);
+}
+
+static int _kNN_nodes_size(_TC ctx) {
+    return pq_size(ctx->nodes);
+}
+
+static void *_kNN_nodes_top(_TC ctx) {
+    return pq_top(ctx->nodes);
+}
+
+static int nodes_comparator(void *aux, void const *a, void const *b) {
+    struct point *query_p = aux;
+    RTREEMBR const *lhs = &((struct candidate_node const *)a)->br->mbr;
+    RTREEMBR const *rhs = &((struct candidate_node const *)b)->br->mbr;
+    // minheap
+    return sgn(MINDIST_RT(query_p, rhs) - MINDIST_RT(query_p, lhs));
+}
+
+/* --------------- METHODS FOR kNN QUERY --------------- */
+
+struct array RT_kNNQuery(RTREENODE *p, struct point query_p, int K) {
+    struct traverse_context ctx;
+    struct array results = create_array(0, sizeof(struct point));
+    struct pqueue nodes = create_pq(sizeof(struct candidate_node), nodes_comparator, &query_p);
+
+    ctx.radius = INFINITY;
+    ctx.K = K;
+    ctx.results = &results;
+    ctx.query_hit = _kNN_query_hit;
+    ctx.nodes = &nodes;
+    ctx.nodes_push = _kNN_nodes_push;
+    ctx.nodes_pop = _kNN_nodes_pop;
+    ctx.nodes_size = _kNN_nodes_size;
+    ctx.nodes_top = _kNN_nodes_top;
+
+    traverse(p, query_p, &ctx);
+    destroy_pq(&nodes);
+
+    return results;
+}
+
+/* ----------------------------------------------------- */
+/* ----------------------------------------------------- */

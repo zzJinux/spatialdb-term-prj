@@ -15,14 +15,14 @@
 *               License (>=v2). Read the file COPYING that comes with GRASS
 *               for details.
 *
-* LAST MODIFY:         ZhangLiang (cheungmine@gmail.com) - 2007-11
+* LAST MODIFY:         Jinwook Jeong (vustthat@gmail.com) - 2019-12
 *****************************************************************************/
 #ifndef  RTREE_H_INCLUDED
 #define  RTREE_H_INCLUDED
 
 /* PAGE_SIZE is normally the natural page size of the machine */
 #define  PAGE_SIZE    512
-#define  DIMS_NUMB    3       /* number of dimensions */
+#define  DIMS_NUMB    2       /* number of dimensions */
 #define  SIDES_NUMB   2*DIMS_NUMB
 
 /* typedef float REALTYPE; */
@@ -238,6 +238,11 @@ int RTreeInsertRect( RTREEMBR *rc, int tid, RTREENODE **root, int level);
  */
 int RTreeDeleteRect( RTREEMBR *rc, int tid, RTREENODE **root);
 
+
+#include "array.h"
+#include "geom.h"
+struct array RT_rangeQuery(RTREENODE *p, struct point query_p, double radius);
+struct array RT_kNNQuery(RTREENODE *p, struct point query_p, int K);
 
 
 #endif /* RTREE_H_INCLUDED */

@@ -1,12 +1,13 @@
 #include "array.h"
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
-#define BUF_WND (32)
+#define BUF_WND (1024)
 
 struct array create_array(size_t len, size_t sz) {
     struct array arr;
-    size_t _caplen = len/BUF_WND*BUF_WND;
+    size_t _caplen = ((len + BUF_WND-1)/BUF_WND)*BUF_WND;
     if(_caplen == 0) _caplen = BUF_WND;
     arr.len = len;
     arr.elem_size = sz;

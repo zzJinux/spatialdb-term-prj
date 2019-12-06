@@ -7,7 +7,7 @@
 #include <time.h>
 
 static struct array runQuery(FILE *listFile, FILE *paramsFile, char const *output_dir, struct array (*queryOp)(struct array, FILE *)) {
-    struct array arr = read_points(listFile);
+    struct array arr = read_points_comma(listFile);
     struct array timer_values = create_array(0, sizeof(double));
 
     int i = 0;
@@ -15,7 +15,7 @@ static struct array runQuery(FILE *listFile, FILE *paramsFile, char const *outpu
         clock_t start, end;
 
         start = clock();
-        struct array out_points = queryOp(arr, stdout);
+        struct array out_points = queryOp(arr, paramsFile);
         end = clock();
 
         double delta = 1000.0*(end - start)/CLOCKS_PER_SEC;

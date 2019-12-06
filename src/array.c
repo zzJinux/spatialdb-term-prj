@@ -17,7 +17,7 @@ struct array create_array(size_t len, size_t sz) {
 
 void resize_array(struct array *arr, size_t len) {
     if(arr->_caplen < len) {
-        size_t _caplen = len/BUF_WND*BUF_WND;
+        size_t _caplen = ((len + BUF_WND-1)/BUF_WND)*BUF_WND;
         arr->buf = realloc(arr->buf, _caplen * arr->elem_size);
         arr->_caplen = _caplen;
     }

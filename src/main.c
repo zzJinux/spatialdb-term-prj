@@ -6,7 +6,7 @@
 #include <string.h>
 #include <time.h>
 
-static struct array runQuery(FILE *listFile, FILE *paramsFile, char const *output_dir, struct array (*queryOp)(struct array, FILE *)) {
+static struct array runQuery(FILE *listFile, FILE *paramsFile, char const *output_dir, struct array (*queryOp)(struct array, FILE *, double *)) {
     struct array arr = read_points_comma(listFile);
     struct array timer_values = create_array(0, sizeof(double));
 
@@ -14,11 +14,9 @@ static struct array runQuery(FILE *listFile, FILE *paramsFile, char const *outpu
     while (!feof(paramsFile)) {
         clock_t start, end;
 
-        start = clock();
-        struct array out_points = queryOp(arr, paramsFile);
-        end = clock();
+        double delta;
+        struct array out_points = queryOp(arr, paramsFile, &delta);
 
-        double delta = 1000.0*(end - start)/CLOCKS_PER_SEC;
         append_array(&timer_values, &delta);
 
         sort_array(&out_points, comparePoints);
@@ -54,7 +52,7 @@ int main(int argc, char *argv[]) {
     char const *paramsFilePath = argv[4];
     char const *queryOutDir = argv[5];
 
-    struct array (*queryOp)(struct array, FILE *);
+    struct array (*queryOp)(struct array, FILE *, double *);
 
     if(strcmp(type, "bruteforce") == 0) {
         if(strcmp(operation, "range") == 0) {

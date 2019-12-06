@@ -22,7 +22,7 @@ inline static void assertPointArrayEquals(struct array const *lhs, struct array 
 
 inline static void testQuery(
     FILE *listFile, FILE *tcFile,
-    struct array (*queryOp)(struct array, FILE *)
+    struct array (*queryOp)(struct array, FILE *, double *)
 ) {
     rewind(listFile);
     rewind(tcFile);
@@ -31,7 +31,8 @@ inline static void testQuery(
 
     /* tcFile */
     /* First is the query parameter */
-    struct array out_points = queryOp(arr, tcFile);
+    double delta;
+    struct array out_points = queryOp(arr, tcFile, &delta);
     sort_array(&out_points, comparePoints);
 
     /* tcFile */

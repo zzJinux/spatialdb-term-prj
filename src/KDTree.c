@@ -41,36 +41,27 @@ inline static void kd_swap(struct kd_node_t *x, struct kd_node_t *y)
     memcpy(y->x, tmp, sizeof(tmp));
 }
 
+static int kd_comparator0(void const *a, void const *b) {
+    double aa = ((struct kd_node_t const *)a)->x[0];
+    double bb = ((struct kd_node_t const *)b)->x[0];
+    return sgn(aa - bb);
+}
+
+static int kd_comparator1(void const *a, void const *b) {
+    double aa = ((struct kd_node_t const *)a)->x[1];
+    double bb = ((struct kd_node_t const *)b)->x[1];
+    return sgn(aa - bb);
+}
+
 // 중앙값 찾는 함수 정의. 중앙값은 kdtree의 node split point를 찾을 때 사용된다.
 inline static struct kd_node_t* find_median(struct kd_node_t *start, struct kd_node_t *end, int idx)
 {
-    if (end <= start) return NULL;
-    if (end == start + 1)
-        return start;
-    
-    struct kd_node_t *p, *store, *med;
-    med = start + (end - start) / 2;
-    double pivot;
-    
-    while (1)
-    {
-        pivot = med->x[idx];
-        
-        kd_swap(med, end-1);
-        for(store = p = start; p < end; p++)
-            if(p->x[idx] < pivot)
-            {
-                if(p != store)
-                    kd_swap(p, store);
-                store++;
-            }
-        kd_swap(store, end - 1);
-        
-        if(store->x[idx] == med->x[idx])
-            return med;
-        if (store > med) end = store;
-        else start = store;
-    }
+    if(idx == 0)
+        qsort(start, end - start, sizeof(struct kd_node_t), kd_comparator0);
+    else
+        qsort(start, end - start, sizeof(struct kd_node_t), kd_comparator1);
+
+    return start + (end - start)/2;
 }
 
 // recursion으로 kdtree를 build하는 함수.

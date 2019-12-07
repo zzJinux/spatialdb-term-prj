@@ -1261,6 +1261,8 @@ struct array RT_rangeQuery(RTREENODE *p, struct point query_p, double radius) {
 /* ------------------------------------------------------- */
 /* ------------------------------------------------------- */
 
+/* --------------- METHODS FOR kNN QUERY --------------- */
+
 static void _kNN_query_hit(_TC ctx, void *elem) {
     struct array *array = ctx->results;
     if(array->len < ctx->K) {
@@ -1295,8 +1297,6 @@ static int nodes_comparator(void *aux, void const *a, void const *b) {
     // minheap
     return sgn(MINDIST_RT(query_p, rhs) - MINDIST_RT(query_p, lhs));
 }
-
-/* --------------- METHODS FOR kNN QUERY --------------- */
 
 struct array RT_kNNQuery(RTREENODE *p, struct point query_p, int K) {
     struct traverse_context ctx;

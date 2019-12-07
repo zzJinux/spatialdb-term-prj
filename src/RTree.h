@@ -244,6 +244,9 @@ int RTreeDeleteRect( RTREEMBR *rc, int tid, RTREENODE **root);
 struct array RT_rangeQuery(RTREENODE *p, struct point query_p, double radius);
 struct array RT_kNNQuery(RTREENODE *p, struct point query_p, int K);
 
+struct array RT_rangeQuery2(RTREENODE *p, struct point query_p, double radius, int *nVisits);
+struct array RT_kNNQuery2(RTREENODE *p, struct point query_p, int K, int *nVisits);
+
 
 #endif /* RTREE_H_INCLUDED */
 

@@ -20,4 +20,7 @@ struct kd_node_t *make_kdtree(struct kd_node_t *t, int len, int i, int dim);
 struct array kd_rangeQuery(struct kd_node_t *p, struct point query_p, double radius);
 struct array kd_kNNQuery(struct kd_node_t *p, struct point query_p, int K);
 
+struct array kd_rangeQuery2(struct kd_node_t *p, struct point query_p, double radius, int *nVisits);
+struct array kd_kNNQuery2(struct kd_node_t *p, struct point query_p, int K, int *nVisits);
+
 #endif

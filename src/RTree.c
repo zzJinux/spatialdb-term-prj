@@ -1176,6 +1176,7 @@ struct traverse_context {
     int K;
     void *results;
     OneArgMethod query_hit;
+    int nVisits;
     void *nodes;
     OneArgMethod nodes_push;
     NoArgMethod nodes_pop;
@@ -1197,6 +1198,8 @@ void traverse(RTREENODE *p, struct point query_p, struct traverse_context *ctx) 
         RTREEBRANCH *br = cnode->br;
         int level = cnode->level;
         ctx->nodes_pop(ctx);
+
+        ++ctx->nVisits;
 
         if(MINDIST_RT(&query_p, &br->mbr) > ctx->radius) continue;
         if(level == 0) {
@@ -1240,6 +1243,11 @@ static void *_rq_nodes_top(_TC ctx) {
 }
 
 struct array RT_rangeQuery(RTREENODE *p, struct point query_p, double radius) {
+    int dummy;
+    return RT_rangeQuery2(p, query_p, radius, &dummy);
+}
+
+struct array RT_rangeQuery2(RTREENODE *p, struct point query_p, double radius, int *nVisits) {
     struct traverse_context ctx;
     struct array results = create_array(0, sizeof(struct point));
     struct array nodes = create_array(0, sizeof(struct candidate_node));
@@ -1247,6 +1255,7 @@ struct array RT_rangeQuery(RTREENODE *p, struct point query_p, double radius) {
     ctx.K = INT_MAX;
     ctx.results = &results;
     ctx.query_hit = _rq_query_hit;
+    ctx.nVisits = 0;
     ctx.nodes = &nodes;
     ctx.nodes_push = _rq_nodes_push;
     ctx.nodes_pop = _rq_nodes_pop;
@@ -1255,6 +1264,8 @@ struct array RT_rangeQuery(RTREENODE *p, struct point query_p, double radius) {
 
     traverse(p, query_p, &ctx);
     destroy_array(&nodes);
+
+    *nVisits = ctx.nVisits;
     return *(struct array *)ctx.results;
 }
 
@@ -1299,6 +1310,11 @@ static int nodes_comparator(void *aux, void const *a, void const *b) {
 }
 
 struct array RT_kNNQuery(RTREENODE *p, struct point query_p, int K) {
+    int dummy;
+    return RT_rangeQuery2(p, query_p, K, &dummy);
+}
+
+struct array RT_kNNQuery2(RTREENODE *p, struct point query_p, int K, int *nVisits) {
     struct traverse_context ctx;
     struct array results = create_array(0, sizeof(struct point));
     struct pqueue nodes = create_pq(sizeof(struct candidate_node), nodes_comparator, &query_p);
@@ -1307,6 +1323,7 @@ struct array RT_kNNQuery(RTREENODE *p, struct point query_p, int K) {
     ctx.K = K;
     ctx.results = &results;
     ctx.query_hit = _kNN_query_hit;
+    ctx.nVisits = 0;
     ctx.nodes = &nodes;
     ctx.nodes_push = _kNN_nodes_push;
     ctx.nodes_pop = _kNN_nodes_pop;
@@ -1316,6 +1333,7 @@ struct array RT_kNNQuery(RTREENODE *p, struct point query_p, int K) {
     traverse(p, query_p, &ctx);
     destroy_pq(&nodes);
 
+    *nVisits = ctx.nVisits;
     return results;
 }
 

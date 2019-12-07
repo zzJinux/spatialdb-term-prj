@@ -22,7 +22,7 @@ inline static void assertPointArrayEquals(struct array const *lhs, struct array 
 
 inline static void testQuery(
     FILE *listFile, FILE *tcFile,
-    struct array (*queryOp)(struct array, FILE *, double *)
+    struct array (*queryOp)(struct array, FILE *, double *, int *)
 ) {
     rewind(listFile);
     rewind(tcFile);
@@ -32,7 +32,8 @@ inline static void testQuery(
     /* tcFile */
     /* First is the query parameter */
     double delta;
-    struct array out_points = queryOp(arr, tcFile, &delta);
+    int nVisits;
+    struct array out_points = queryOp(arr, tcFile, &delta, &nVisits);
     sort_array(&out_points, comparePoints);
 
     /* tcFile */
@@ -41,6 +42,7 @@ inline static void testQuery(
     sort_array(&ans_points, comparePoints);
 
     assertPointArrayEquals(&out_points, &ans_points);
+    printf("visits: %d\n", nVisits);
 
     destroy_array(&arr);
     destroy_array(&out_points);

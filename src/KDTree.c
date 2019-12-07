@@ -116,6 +116,7 @@ struct traverse_context {
     double radius;
     int K;
     void *results;
+    int nVisits;
     OneArgMethod query_hit;
     void *nodes;
     OneArgMethod nodes_push;
@@ -147,6 +148,8 @@ static void traverse(struct kd_node_t *p, struct point query_p, struct traverse_
         int dim_idx = cand->dim;
         ctx->nodes_pop(ctx);
         double d = kd_dist(node, &query_kd, 2);
+
+        ++ctx->nVisits;
 
         if(d < ctx->radius) {
             struct point hitp;
@@ -230,12 +233,19 @@ static void *_rq_nodes_top(_TC ctx) {
 }
 
 struct array kd_rangeQuery(struct kd_node_t *p, struct point query_p, double radius) {
+    int dummy;
+    return kd_rangeQuery2(p, query_p, radius, &dummy);
+}
+
+struct array kd_rangeQuery2(struct kd_node_t *p, struct point query_p, double radius, int *nVisits) {
     struct traverse_context ctx;
     struct array results = create_array(0, sizeof(struct point));
     struct array nodes = create_array(0, sizeof(struct candidate_node));
     ctx.radius = radius;
+    ctx.K = INT_MAX;
     ctx.results = &results;
     ctx.query_hit = _rq_query_hit;
+    ctx.nVisits = 0;
     ctx.nodes = &nodes;
     ctx.nodes_push = _rq_nodes_push;
     ctx.nodes_pop = _rq_nodes_pop;
@@ -244,6 +254,8 @@ struct array kd_rangeQuery(struct kd_node_t *p, struct point query_p, double rad
 
     traverse(p, query_p, &ctx);
     destroy_array(&nodes);
+
+    *nVisits = ctx.nVisits;
     return *(struct array *)ctx.results;
 }
 
@@ -306,6 +318,11 @@ static int nodes_comparator(void *aux, void const *a, void const *b) {
 }
 
 struct array kd_kNNQuery(struct kd_node_t *p, struct point query_p, int K) {
+    int dummy;
+    return kd_kNNQuery2(p, query_p, K, &dummy);
+}
+
+struct array kd_kNNQuery2(struct kd_node_t *p, struct point query_p, int K, int *nVisits) {
     struct kd_node_t query_p_kd;
     query_p_kd.x[0] = query_p.x;
     query_p_kd.x[1] = query_p.y;
@@ -317,6 +334,7 @@ struct array kd_kNNQuery(struct kd_node_t *p, struct point query_p, int K) {
     ctx.K = K;
     ctx.results = &results;
     ctx.query_hit = _kNN_query_hit;
+    ctx.nVisits = 0;
     ctx.nodes = &nodes;
     ctx.nodes_push = _kNN_nodes_push;
     ctx.nodes_pop = _kNN_nodes_pop;
@@ -328,6 +346,7 @@ struct array kd_kNNQuery(struct kd_node_t *p, struct point query_p, int K) {
 
     struct array ret = pq_to_array(&results);
     destroy_pq(&results);
+    *nVisits = ctx.nVisits;
     return ret;
 }
 

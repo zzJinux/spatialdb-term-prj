@@ -6,18 +6,28 @@
 #include <string.h>
 #include <time.h>
 
-static struct array runQuery(FILE *listFile, FILE *paramsFile, char const *output_dir, struct array (*queryOp)(struct array, FILE *, double *)) {
+struct metric {
+    struct array timer_values;
+    struct array hit_values;
+};
+
+static struct metric runQuery(FILE *listFile, FILE *paramsFile, char const *output_dir, struct array (*queryOp)(struct array, FILE *, double *, int *)) {
+    struct metric metric;
+
     struct array arr = read_points_comma(listFile);
-    struct array timer_values = create_array(0, sizeof(double));
+    metric.timer_values = create_array(0, sizeof(double));
+    metric.hit_values = create_array(0, sizeof(int));
 
     int i = 0;
     while (!feof(paramsFile)) {
         clock_t start, end;
 
         double delta;
-        struct array out_points = queryOp(arr, paramsFile, &delta);
+        int nVisits;
+        struct array out_points = queryOp(arr, paramsFile, &delta, &nVisits);
 
-        append_array(&timer_values, &delta);
+        append_array(&metric.timer_values, &delta);
+        append_array(&metric.hit_values, &nVisits);
 
         sort_array(&out_points, comparePoints);
 
@@ -37,7 +47,7 @@ static struct array runQuery(FILE *listFile, FILE *paramsFile, char const *outpu
 
     destroy_array(&arr);
 
-    return timer_values;
+    return metric;
 }
 
 int main(int argc, char *argv[]) {
@@ -52,7 +62,7 @@ int main(int argc, char *argv[]) {
     char const *paramsFilePath = argv[4];
     char const *queryOutDir = argv[5];
 
-    struct array (*queryOp)(struct array, FILE *, double *);
+    struct array (*queryOp)(struct array, FILE *, double *, int *);
 
     if(strcmp(type, "bruteforce") == 0) {
         if(strcmp(operation, "range") == 0) {
@@ -98,11 +108,12 @@ int main(int argc, char *argv[]) {
     FILE *listFile = fopen(listFilePath, "r");
     FILE *paramsFile = fopen(paramsFilePath, "r");
 
-    struct array timer_values = runQuery(listFile, paramsFile, queryOutDir, queryOp);
+    struct metric metric = runQuery(listFile, paramsFile, queryOutDir, queryOp);
 
-    for(int i=0; i<timer_values.len; ++i) {
-        double *dd = (double *)timer_values.buf + i;
-        printf("%lf\n", *dd);
+    for(int i=0; i<metric.timer_values.len; ++i) {
+        double *dd = (double *)metric.timer_values.buf + i;
+        int *hh = (int *)metric.hit_values.buf + i;
+        printf("%lf %d\n", *dd, *hh);
     }
 
     fclose(listFile);

@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <time.h>
 
-static struct array run_bf_rangeQuery(struct array arr, FILE *tcFile, double *delta) {
+static struct array run_bf_rangeQuery(struct array arr, FILE *tcFile, double *delta, int *nVisits) {
     struct point query_p;
     double radi;
     fscanf(tcFile, "%lf %lf %lf ", &query_p.x, &query_p.y, &radi);
@@ -18,10 +18,11 @@ static struct array run_bf_rangeQuery(struct array arr, FILE *tcFile, double *de
     end = clock();
 
     *delta = 1000.0*(end - start)/CLOCKS_PER_SEC;
+    *nVisits = 0;
     return results;
 }
 
-static struct array run_bf_kNNQuery(struct array arr, FILE *tcFile, double *delta) {
+static struct array run_bf_kNNQuery(struct array arr, FILE *tcFile, double *delta, int *nVisits) {
     struct point query_p;
     int k;
     fscanf(tcFile, "%lf %lf %d ", &query_p.x, &query_p.y, &k);
@@ -32,6 +33,7 @@ static struct array run_bf_kNNQuery(struct array arr, FILE *tcFile, double *delt
     end = clock();
 
     *delta = 1000.0*(end - start)/CLOCKS_PER_SEC;
+    *nVisits = 0;
     return results;
 }
 
@@ -49,7 +51,7 @@ static struct array kdnodesFromPoints(struct array arr) {
     return kdnodes_array;
 }
 
-static struct array run_kd_rangeQuery(struct array arr, FILE *tcFile, double *delta) {
+static struct array run_kd_rangeQuery(struct array arr, FILE *tcFile, double *delta, int *nVisits) {
     struct point query_p;
     double radi;
     fscanf(tcFile, "%lf %lf %lf ", &query_p.x, &query_p.y, &radi);
@@ -58,7 +60,7 @@ static struct array run_kd_rangeQuery(struct array arr, FILE *tcFile, double *de
     struct kd_node_t *kd_root = make_kdtree((struct kd_node_t *)kdnodes_array.buf, arr.len, 0, 2);
     clock_t start, end;
     start = clock();
-    struct array queryResult = kd_rangeQuery(kd_root, query_p, radi);
+    struct array queryResult = kd_rangeQuery2(kd_root, query_p, radi, nVisits);
     end = clock();
 
     *delta = 1000.0*(end - start)/CLOCKS_PER_SEC;
@@ -66,7 +68,7 @@ static struct array run_kd_rangeQuery(struct array arr, FILE *tcFile, double *de
     return queryResult;
 }
 
-static struct array run_kd_kNNQuery(struct array arr, FILE *tcFile, double *delta) {
+static struct array run_kd_kNNQuery(struct array arr, FILE *tcFile, double *delta, int *nVisits) {
     struct point query_p;
     int k;
     fscanf(tcFile, "%lf %lf %d ", &query_p.x, &query_p.y, &k);
@@ -75,7 +77,7 @@ static struct array run_kd_kNNQuery(struct array arr, FILE *tcFile, double *delt
     struct kd_node_t *kd_root = make_kdtree((struct kd_node_t *)kdnodes_array.buf, arr.len, 0, 2);
     clock_t start, end;
     start = clock();
-    struct array queryResult = kd_kNNQuery(kd_root, query_p, k);
+    struct array queryResult = kd_kNNQuery2(kd_root, query_p, k, nVisits);
     end = clock();
 
     *delta = 1000.0*(end - start)/CLOCKS_PER_SEC;
@@ -95,7 +97,7 @@ static RTREENODE *RTNodeFromPoints(struct array arr) {
     return root;
 }
 
-static struct array run_rt_rangeQuery(struct array arr, FILE *tcFile, double *delta) {
+static struct array run_rt_rangeQuery(struct array arr, FILE *tcFile, double *delta, int *nVisits) {
     struct point query_p;
     double radi;
     fscanf(tcFile, "%lf %lf %lf ", &query_p.x, &query_p.y, &radi);
@@ -103,7 +105,7 @@ static struct array run_rt_rangeQuery(struct array arr, FILE *tcFile, double *de
     RTREENODE *root = RTNodeFromPoints(arr);
     clock_t start, end;
     start = clock();
-    struct array results = RT_rangeQuery(root, query_p, radi);
+    struct array results = RT_rangeQuery2(root, query_p, radi, nVisits);
     end = clock();
 
     *delta = 1000.0*(end - start)/CLOCKS_PER_SEC;
@@ -111,7 +113,7 @@ static struct array run_rt_rangeQuery(struct array arr, FILE *tcFile, double *de
     return results;
 }
 
-static struct array run_rt_kNNQuery(struct array arr, FILE *tcFile, double *delta) {
+static struct array run_rt_kNNQuery(struct array arr, FILE *tcFile, double *delta, int *nVisits) {
     struct point query_p;
     int k;
     fscanf(tcFile, "%lf %lf %d ", &query_p.x, &query_p.y, &k);
@@ -119,7 +121,7 @@ static struct array run_rt_kNNQuery(struct array arr, FILE *tcFile, double *delt
     RTREENODE *root = RTNodeFromPoints(arr);
     clock_t start, end;
     start = clock();
-    struct array results = RT_kNNQuery(root, query_p, k);
+    struct array results = RT_kNNQuery2(root, query_p, k, nVisits);
     end = clock();
 
     *delta = 1000.0*(end - start)/CLOCKS_PER_SEC;

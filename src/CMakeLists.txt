@@ -21,5 +21,6 @@ set(sources
 
 add_library(mylib ${headers} ${sources})
 target_include_directories(mylib INTERFACE .)
+target_link_libraries(mylib m)
 add_executable(a.out main.c)
 target_link_libraries(a.out mylib)

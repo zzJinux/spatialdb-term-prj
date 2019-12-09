@@ -66,3 +66,25 @@ kNN query 파라미터의 경우도 동일하다
 > output_002.txt  
 
 가 생성된다.
+
+## 예시 입력 조합
+```
+Release/src/a.out bruteforce range /path/to/clustered_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out kdtree range /path/to/clustered_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out rtree range /path/to/clustered_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out bruteforce range /path/to/gaussian_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out kdtree range /path/to/gaussian_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out rtree range /path/to/gaussian_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out bruteforce range /path/to/uniformed_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out kdtree range /path/to/uniformed_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out rtree range /path/to/uniformed_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out bruteforce kNN /path/to/clustered_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out kdtree kNN /path/to/clustered_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out rtree kNN /path/to/clustered_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out bruteforce kNN /path/to/gaussian_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out kdtree kNN /path/to/gaussian_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out rtree kNN /path/to/gaussian_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out bruteforce kNN /path/to/uniformed_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out kdtree kNN /path/to/uniformed_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+Release/src/a.out rtree kNN /path/to/uniformed_dataset.txt /path/to/metric_out_dir /path/to/out_dir
+```
